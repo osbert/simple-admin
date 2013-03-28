@@ -1,20 +1,66 @@
 # simple-admin
 
-A Clojure library designed to protect routes from public access. A
-single admin user and password are specified as environment variables.
-HTTPS can also enforced on these routes.
+A Clojure library built on top of cemerick/friend designed to protect
+some routes from public access. A single admin user and password are
+specified as environment variables. HTTPS can also enforced on these
+routes, but is not by default.
 
 Credentials/behavior can be customized through the environment
 variables (or system properties, since weavejester/environ is used):
 
-  ADMIN_PASSWORD (defaults to "default-admin-password")
-  ADMIN_USERNAME (defaults to "admin")
-  ADMIN_FORCE_HTTPS (defaults to nil)
-  ADMIN_ROUTE_PREFIX (defaults to "/admin")
+  * ADMIN_PASSWORD (defaults to "default-admin-password")
+  * ADMIN_USERNAME (defaults to "admin")
+  * ADMIN_FORCE_HTTPS (defaults to nil)
+
+The following routes are added:
+
+  * GET admin/login
+  * POST admin/login (from cemirick/friend)
+  * POST admin/logout
+
+Future work to be done:
+
+  * Allow custom login form view
+  * Allow custom post-login/logout redirect
+
+## Installation
+
+Include the following dependency in your `project.clj` file:
+
+```clojure
+:dependencies [[osbert/simple-admin "0.1.0-SNAPSHOT"]]
+```
 
 ## Usage
 
-FIXME
+```clojure
+(use 'compojure.core) ; For defroutes in example below
+(use ['simple-admin.core :only ['wrap-simple-admin]])
+```
+
+Split your routes into two types, publicly facing and admin required:
+
+```clojure
+(defroutes app-routes
+  (GET "/" [] "Hello world!"))
+
+(defroutes admin-routes
+  (GET "/private" [] "Hello admin!"))
+```
+
+`wrap-simple-admin` can then be used to require logging in as an admin
+using an interactive form before accessing anything in admin-routes.
+In this example, to then combine these two sets of routes to create
+your entire application:
+
+```clojure
+(def app (routes app-routes (wrap-simple-admin admin-routes)))
+```
+
+Now, navigating to `/private` should redirect to `/admin/login`.
+Logging in should allow you to view `/private`. To logout afterwards,
+add something to your `/private` views to send a POST to
+`(simple-admin.core/logout-uri)`.
 
 ## License
 
