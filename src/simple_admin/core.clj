@@ -25,10 +25,6 @@
 ;; calling wrap-simple-admin, see associated friend documentation.
 (def ^:dynamic *friend-scheme-middleware* friend/requires-scheme)
 
-(def admins {"admin" {:username (or (env :admin-username) "admin")
-                      :password (creds/hash-bcrypt (or (env :admin-password) "default-admin-password"))
-                      :roles #{::admin}}})
-
 (defn wrap-force-https
   ([handler] (wrap-force-https handler *friend-scheme-middleware*))
   ([handler friend-requires-scheme]
@@ -64,9 +60,13 @@
 (defn wrap-simple-admin
   "Middleware to only allow routes in admin-handler to be accessed by an admin."
   [admin-handler]
-  (-> (routes (public-admin-handler)
-              (wrap-admin-only admin-handler))
-      (friend/authenticate {:credential-fn (partial creds/bcrypt-credential-fn admins)
-                            :workflows [(workflows/interactive-form :login-uri (login-uri))]
-                            :login-uri (login-uri)
-                            :default-landing-uri "/"})))
+  (let [admin-user (or (env :admin-username) "admin")
+        admin-creds {admin-user {:username admin-user
+                                 :password (creds/hash-bcrypt (or (env :admin-password) "default-admin-password"))
+                                 :roles #{::admin}}}]
+    (-> (routes (public-admin-handler)
+                (wrap-admin-only admin-handler))
+        (friend/authenticate {:credential-fn (partial creds/bcrypt-credential-fn admin-creds)
+                              :workflows [(workflows/interactive-form :login-uri (login-uri))]
+                              :login-uri (login-uri)
+                              :default-landing-uri "/"}))))
