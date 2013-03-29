@@ -35,6 +35,7 @@ Include the following dependency in your `project.clj` file:
 
 ```clojure
 (use 'compojure.core) ; For defroutes in example below
+(use 'compojure.handler) ; For additional middleware required by friend
 (use ['simple-admin.core :only ['wrap-simple-admin]])
 ```
 
@@ -54,7 +55,7 @@ In this example, to then combine these two sets of routes to create
 your entire application:
 
 ```clojure
-(def app (routes app-routes (wrap-simple-admin admin-routes)))
+(def app (site (routes app-routes (wrap-simple-admin admin-routes))))
 ```
 
 Now, navigating to `/private` should redirect to `/admin/login`.
