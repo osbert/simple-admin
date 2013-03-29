@@ -1,4 +1,4 @@
-(defproject osbert/simple-admin "0.1.0"
+(defproject osbert/simple-admin "0.1.1"
   :description "Single user admin with password specified by the environment."
   :url "http://github.com/osbert/simple-admin"
   :license {:name "Eclipse Public License"
