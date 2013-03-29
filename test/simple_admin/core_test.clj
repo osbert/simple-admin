@@ -43,3 +43,15 @@
       (testing "GET /booyah/login"
         (let [response (my-app (request :get "/booyah/login"))]
           (is (= (:status response) 200)))))))
+
+(deftest test-forced-https
+  (with-redefs
+    [environ.core/env (merge environ.core/env {:admin-force-https true})]
+    (testing "GET /admin/login should redirect to https version"
+      (let [response (test-app (request :get "/admin/login"))]
+        (is (= (:status response) 302))
+        (is (= (-> response :headers (get "Location")) "https://localhost/admin/login"))))
+
+    (testing "GET https login should return 200"
+      (let [response (test-app (request :get "https://localhost/admin/login"))]
+        (is (= (:status response) 200))))))
