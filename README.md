@@ -36,7 +36,7 @@ Include the following dependency in your `project.clj` file:
 ```clojure
 (use 'compojure.core) ; For defroutes in example below
 (use 'compojure.handler) ; For additional middleware required by friend
-(use ['simple-admin.core :only ['wrap-simple-admin]])
+(use ['simple-admin.core :only ['wrap-simple-admin wrap-admin-only]])
 ```
 
 Split your routes into two types, publicly facing and admin required:
@@ -49,19 +49,24 @@ Split your routes into two types, publicly facing and admin required:
   (GET "/private" [] "Hello admin!"))
 ```
 
-`wrap-simple-admin` can then be used to require logging in as an admin
-using an interactive form before accessing anything in admin-routes.
-In this example, to then combine these two sets of routes to create
-your entire application:
+`wrap-admin-only` will wrap admin-routes in a context and require
+logging in as an admin using an interactive form before accessing
+admin-routes.
+
+`wrap-simple-admin` includes the public admin routes and adds friend
+middleware. In this example, to then combine these two sets of routes
+to create your entire application:
 
 ```clojure
-(def app (site (routes app-routes (wrap-simple-admin admin-routes))))
+(def app (-> (routes app-routes (wrap-admin-only admin-routes))
+             wrap-simple-admin
+             site))
 ```
 
-Now, navigating to `/private` should redirect to `/admin/login`.
-Logging in should allow you to view `/private`. To logout afterwards,
-add something to your `/private` views to send a POST to
-`(simple-admin.core/logout-uri)`.
+Now, navigating to `/admin/private` should redirect to `/admin/login`.
+Logging in should allow you to view `/admin/private`. To logout
+afterwards, add something to your `/admin/private` views to send a
+POST to `(simple-admin.core/logout-uri)`.
 
 ## License
 

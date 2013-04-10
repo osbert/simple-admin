@@ -52,20 +52,25 @@
 (defn wrap-admin-only
   "Middleware that forces authorization as an admin."
   [handler]
-  (-> handler
-      (friend/wrap-authorize #{::admin})
-      wrap-anti-forgery
-      wrap-force-https))
+  (context *admin-prefix* request
+           (-> handler
+               (friend/wrap-authorize #{::admin})
+               wrap-anti-forgery
+               wrap-force-https)))
 
 (defn wrap-simple-admin
   "Middleware to only allow routes in admin-handler to be accessed by an admin."
-  [admin-handler]
+  [handler]
   (let [admin-user (or (env :admin-username) "admin")
         admin-creds {admin-user {:username admin-user
                                  :password (creds/hash-bcrypt (or (env :admin-password) "default-admin-password"))
                                  :roles #{::admin}}}]
+    ;; NOTE: This order is important. Because both handlers utilize
+    ;; the same *admin-prefix*, if the order is reversed public routes
+    ;; will 403 because once the context is satisfied wrap-authorize
+    ;; will be called.
     (-> (routes (public-admin-handler)
-                (wrap-admin-only admin-handler))
+                handler)
         (friend/authenticate {:credential-fn (partial creds/bcrypt-credential-fn admin-creds)
                               :workflows [(workflows/interactive-form :login-uri (login-uri))]
                               :login-uri (login-uri)
